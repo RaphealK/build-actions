@@ -6,7 +6,6 @@ CONFIG_MODULES=y
 CONFIG_HAVE_DOT_CONFIG=y
 CONFIG_HOST_OS_LINUX=y
 # CONFIG_HOST_OS_MACOS is not set
-CONFIG_DEFAULT_TARGET_mediatek_mt7986=y
 # CONFIG_TARGET_sunxi is not set
 # CONFIG_TARGET_apm821xx is not set
 # CONFIG_TARGET_ath25 is not set
@@ -49,7 +48,7 @@ CONFIG_TARGET_mediatek=y
 # CONFIG_TARGET_mediatek_mt7629 is not set
 CONFIG_TARGET_mediatek_mt7986=y
 # CONFIG_TARGET_mediatek_mt7981 is not set
-CONFIG_TARGET_MULTI_PROFILE=y
+# CONFIG_TARGET_MULTI_PROFILE is not set
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_mt7986a-ax6000-spim-nor-rfb is not set
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_mt7986a-ax6000-spim-nand-rfb is not set
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_mt7986a-ax8400-spim-nand-rfb is not set
@@ -75,7 +74,7 @@ CONFIG_TARGET_MULTI_PROFILE=y
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_mt7986b-ax6000-2500wan-sd-rfb is not set
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_mediatek_mt7986-fpga is not set
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_mediatek_mt7986-fpga-ubi is not set
-# CONFIG_TARGET_mediatek_mt7986_DEVICE_xiaomi_redmi-router-ax6000 is not set
+CONFIG_TARGET_mediatek_mt7986_DEVICE_xiaomi_redmi-router-ax6000=y
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_xiaomi_redmi-router-ax6000-stock is not set
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_ruijie-rg-x60-pro-uboot is not set
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_ruijie-rg-x60-pro is not set
@@ -89,168 +88,58 @@ CONFIG_TARGET_MULTI_PROFILE=y
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_tplink_tl-xdr6086 is not set
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_tplink_tl-xdr6088 is not set
 # CONFIG_TARGET_mediatek_mt7986_DEVICE_zyxel_ex5700 is not set
-
-#
-# Target Devices
-#
-# CONFIG_TARGET_ALL_PROFILES is not set
-CONFIG_TARGET_PER_DEVICE_ROOTFS=y
-CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_glinet_gl-mt6000=y
-CONFIG_TARGET_DEVICE_PACKAGES_mediatek_mt7986_DEVICE_glinet_gl-mt6000=""
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_jdcloud_re-cp-03 is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax6000-2500wan-gsw-spim-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax6000-2500wan-sd-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax6000-2500wan-spim-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax6000-2500wan-spim-nor-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax6000-emmc-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax6000-snfi-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax6000-spim-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax6000-spim-nor-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax7800-2500wan-spim-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax7800-2500wan-spim-nor-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax7800-spim-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax7800-spim-nor-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax8400-2500wan-spim-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986a-ax8400-spim-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986b-ax6000-2500wan-gsw-spim-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986b-ax6000-2500wan-sd-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986b-ax6000-2500wan-snfi-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986b-ax6000-2500wan-spim-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986b-ax6000-2500wan-spim-nor-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986b-ax6000-emmc-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986b-ax6000-snfi-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986b-ax6000-spim-nand-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mt7986b-ax6000-spim-nor-rfb is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mediatek_mt7986-fpga is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_mediatek_mt7986-fpga-ubi is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_BPI-R3MINI-EMMC is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_BPI-R3MINI-NAND is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_BPI-R3MINI-NAND-110M is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_netcore_n60 is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_netcore_n60-pro is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_ruijie-rg-x60-pro is not set
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_ruijie-rg-x60-pro-uboot is not set
-CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_tplink_tl-xdr6086=y
-CONFIG_TARGET_DEVICE_PACKAGES_mediatek_mt7986_DEVICE_tplink_tl-xdr6086=""
-CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_tplink_tl-xdr6088=y
-CONFIG_TARGET_DEVICE_PACKAGES_mediatek_mt7986_DEVICE_tplink_tl-xdr6088=""
-CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_xiaomi_redmi-router-ax6000=y
-CONFIG_TARGET_DEVICE_PACKAGES_mediatek_mt7986_DEVICE_xiaomi_redmi-router-ax6000=""
-CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_xiaomi_redmi-router-ax6000-stock=y
-CONFIG_TARGET_DEVICE_PACKAGES_mediatek_mt7986_DEVICE_xiaomi_redmi-router-ax6000-stock=""
-# CONFIG_TARGET_DEVICE_mediatek_mt7986_DEVICE_zyxel_ex5700 is not set
-# end of Target Devices
-
 CONFIG_HAS_SUBTARGETS=y
 CONFIG_HAS_DEVICES=y
 CONFIG_TARGET_BOARD="mediatek"
 CONFIG_TARGET_SUBTARGET="mt7986"
+CONFIG_TARGET_PROFILE="DEVICE_xiaomi_redmi-router-ax6000"
 CONFIG_TARGET_ARCH_PACKAGES="aarch64_cortex-a53"
 CONFIG_DEFAULT_TARGET_OPTIMIZATION="-Os -pipe -mcpu=cortex-a53"
 CONFIG_CPU_TYPE="cortex-a53"
 CONFIG_LINUX_5_4=y
 CONFIG_DEFAULT_autocore-arm=y
-CONFIG_MODULE_DEFAULT_autocore-arm=y
-CONFIG_MODULE_DEFAULT_automount=y
 CONFIG_DEFAULT_base-files=y
-CONFIG_MODULE_DEFAULT_base-files=y
-CONFIG_MODULE_DEFAULT_blkid=y
 CONFIG_DEFAULT_block-mount=y
-CONFIG_MODULE_DEFAULT_block-mount=y
-CONFIG_MODULE_DEFAULT_blockdev=y
 CONFIG_DEFAULT_ca-bundle=y
-CONFIG_MODULE_DEFAULT_ca-bundle=y
 CONFIG_DEFAULT_default-settings-chn=y
-CONFIG_MODULE_DEFAULT_default-settings-chn=y
 CONFIG_DEFAULT_dnsmasq-full=y
-CONFIG_MODULE_DEFAULT_dnsmasq-full=y
 CONFIG_DEFAULT_dropbear=y
-CONFIG_MODULE_DEFAULT_dropbear=y
-CONFIG_MODULE_DEFAULT_f2fsck=y
-CONFIG_MODULE_DEFAULT_fdisk=y
 CONFIG_DEFAULT_firewall4=y
-CONFIG_MODULE_DEFAULT_firewall4=y
 CONFIG_DEFAULT_fstools=y
-CONFIG_MODULE_DEFAULT_fstools=y
-CONFIG_MODULE_DEFAULT_kmod-fs-f2fs=y
 CONFIG_DEFAULT_kmod-gpio-button-hotplug=y
-CONFIG_MODULE_DEFAULT_kmod-gpio-button-hotplug=y
 CONFIG_DEFAULT_kmod-leds-gpio=y
-CONFIG_MODULE_DEFAULT_kmod-leds-gpio=y
-CONFIG_MODULE_DEFAULT_kmod-leds-ws2812b=y
-CONFIG_MODULE_DEFAULT_kmod-mmc=y
+CONFIG_DEFAULT_kmod-leds-ws2812b=y
 CONFIG_DEFAULT_kmod-nf-nathelper=y
-CONFIG_MODULE_DEFAULT_kmod-nf-nathelper=y
 CONFIG_DEFAULT_kmod-nf-nathelper-extra=y
-CONFIG_MODULE_DEFAULT_kmod-nf-nathelper-extra=y
 CONFIG_DEFAULT_kmod-nft-offload=y
-CONFIG_MODULE_DEFAULT_kmod-nft-offload=y
-CONFIG_MODULE_DEFAULT_kmod-nls-cp437=y
-CONFIG_MODULE_DEFAULT_kmod-nls-iso8859-1=y
-CONFIG_MODULE_DEFAULT_kmod-usb-net-rndis=y
-CONFIG_MODULE_DEFAULT_kmod-usb2=y
-CONFIG_MODULE_DEFAULT_kmod-usb3=y
 CONFIG_DEFAULT_libc=y
-CONFIG_MODULE_DEFAULT_libc=y
 CONFIG_DEFAULT_libgcc=y
-CONFIG_MODULE_DEFAULT_libgcc=y
 CONFIG_DEFAULT_libustream-openssl=y
-CONFIG_MODULE_DEFAULT_libustream-openssl=y
 CONFIG_DEFAULT_logd=y
-CONFIG_MODULE_DEFAULT_logd=y
-CONFIG_MODULE_DEFAULT_losetup=y
 CONFIG_DEFAULT_luci-app-package-manager=y
-CONFIG_MODULE_DEFAULT_luci-app-package-manager=y
 CONFIG_DEFAULT_luci-app-upnp-mtk-adjust=y
-CONFIG_MODULE_DEFAULT_luci-app-upnp-mtk-adjust=y
-CONFIG_MODULE_DEFAULT_luci-app-usb-printer=y
 CONFIG_DEFAULT_luci-app-wrtbwmon=y
-CONFIG_MODULE_DEFAULT_luci-app-wrtbwmon=y
 CONFIG_DEFAULT_luci-compat=y
-CONFIG_MODULE_DEFAULT_luci-compat=y
-CONFIG_MODULE_DEFAULT_luci-i18n-usb-printer-zh-cn=y
 CONFIG_DEFAULT_luci-lib-base=y
-CONFIG_MODULE_DEFAULT_luci-lib-base=y
 CONFIG_DEFAULT_luci-lib-ipkg=y
-CONFIG_MODULE_DEFAULT_luci-lib-ipkg=y
 CONFIG_DEFAULT_luci-light=y
-CONFIG_MODULE_DEFAULT_luci-light=y
-CONFIG_MODULE_DEFAULT_mkf2fs=y
 CONFIG_DEFAULT_mtd=y
-CONFIG_MODULE_DEFAULT_mtd=y
 CONFIG_DEFAULT_mtk-smp=y
-CONFIG_MODULE_DEFAULT_mtk-smp=y
 CONFIG_DEFAULT_ndisc6=y
-CONFIG_MODULE_DEFAULT_ndisc6=y
 CONFIG_DEFAULT_netifd=y
-CONFIG_MODULE_DEFAULT_netifd=y
 CONFIG_DEFAULT_nftables=y
-CONFIG_MODULE_DEFAULT_nftables=y
 CONFIG_DEFAULT_odhcp6c=y
-CONFIG_MODULE_DEFAULT_odhcp6c=y
 CONFIG_DEFAULT_odhcpd-ipv6only=y
-CONFIG_MODULE_DEFAULT_odhcpd-ipv6only=y
 CONFIG_DEFAULT_ppp=y
-CONFIG_MODULE_DEFAULT_ppp=y
 CONFIG_DEFAULT_ppp-mod-pppoe=y
-CONFIG_MODULE_DEFAULT_ppp-mod-pppoe=y
 CONFIG_DEFAULT_procd-ujail=y
-CONFIG_MODULE_DEFAULT_procd-ujail=y
 CONFIG_DEFAULT_rdisc6=y
-CONFIG_MODULE_DEFAULT_rdisc6=y
 CONFIG_DEFAULT_uboot-envtool=y
-CONFIG_MODULE_DEFAULT_uboot-envtool=y
 CONFIG_DEFAULT_uci=y
-CONFIG_MODULE_DEFAULT_uci=y
 CONFIG_DEFAULT_uclient-fetch=y
-CONFIG_MODULE_DEFAULT_uclient-fetch=y
 CONFIG_DEFAULT_urandom-seed=y
-CONFIG_MODULE_DEFAULT_urandom-seed=y
 CONFIG_DEFAULT_urngd=y
-CONFIG_MODULE_DEFAULT_urngd=y
-CONFIG_MODULE_DEFAULT_usbutils=y
 CONFIG_DEFAULT_wget-ssl=y
-CONFIG_MODULE_DEFAULT_wget-ssl=y
 CONFIG_HAS_FPU=y
 CONFIG_AUDIO_SUPPORT=y
 CONFIG_GPIO_SUPPORT=y
