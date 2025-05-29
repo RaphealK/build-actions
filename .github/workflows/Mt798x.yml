@@ -35,6 +35,7 @@ on:
           - 'glinet-gl-xe3000'
           - 'huasifei-wh3000-emmc'
           - 'jcg-q30'
+          - 'REDMI-AX6000'
       INFORMATION_NOTICE:
         description: 'Telegram或pushplus信息通知'
         required: true
