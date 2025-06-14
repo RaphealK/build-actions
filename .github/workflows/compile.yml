@@ -9,7 +9,7 @@ on:
     branches:
       - main
     paths:
-      - 'buconfig'
+      - 'build/AX6000/relevance/start'
 
 env:
   GIT_REPOSITORY: ${{github.repository}}
@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-       target: [Lede]
+       target: [AX6000]
 
     steps:
     - name: 释放Ubuntu磁盘空间
