@@ -25,17 +25,10 @@ on:
       CONFIG_FILE:
         description: '请选择[seed文件夹内]的配置文件'
         required: true
-        default: '360-t7-108M'
+        default: 'AX6000'
         type: choice
         options:
-          - '360-t7-108M'
-          - 'clt-r30b1-112M'
-          - 'cudy_tr3000-v1'
-          - 'cmcc-rax3000m-emmc'
-          - 'cmcc_rax3000me'
-          - 'glinet-gl-xe3000'
-          - 'huasifei-wh3000-emmc'
-          - 'jcg-q30'
+          - 'AX6000'
       INFORMATION_NOTICE:
         description: 'Telegram或pushplus信息通知'
         required: true
@@ -82,8 +75,8 @@ on:
 
 # 如若启动定时编译的话,配置文件是设置对应文件夹内的settings.ini文件
 # 定时触发开启开始编译(把下面两个#去掉开启,时间设置请看定时开启编译说明)
-#  schedule:
-#   - cron: 35 18 * * *
+  schedule:
+   - cron: 35 18 * * *
 
 env:
   GIT_REPOSITORY: ${{github.repository}}
