@@ -25,7 +25,7 @@ on:
       CONFIG_FILE:
         description: '请选择[seed文件夹内]的配置文件'
         required: true
-        default: '360-t7-108M'
+        default: 'hmax6k'
         type: choice
         options:
           - '360-t7-108M'
@@ -36,6 +36,7 @@ on:
           - 'glinet-gl-xe3000'
           - 'huasifei-wh3000-emmc'
           - 'jcg-q30'
+          - 'hmax6k'
       INFORMATION_NOTICE:
         description: 'Telegram或pushplus信息通知'
         required: true
