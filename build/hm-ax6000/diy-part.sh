@@ -97,3 +97,4 @@ EOF
 
 git clone  https://github.com/gdy666/luci-app-lucky.git package/lucky
 git clone  https://github.com/linkease/istore.git package/luci-app-store
+git clone https://github.com/gngpp/luci-theme-design.git  package/luci-theme-design
