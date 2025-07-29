@@ -1,56 +1,64 @@
-name: Build and Release Compressed AdGuardHome (ARM64)
+name: AdGuardHome ARM64 压缩发布
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 每天 UTC 时间 0 点运行
-  workflow_dispatch: # 允许手动触发
+    - cron: '0 0 * * *'  # 每天 UTC 时间 00:00 自动运行
+  workflow_dispatch:     # 支持手动触发
 
 jobs:
-  build:
+  process-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: 安装依赖工具
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget upx
 
-      - name: Install UPX
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y upx
+    - name: 获取最新版本信息
+      id: version_info
+      run: |
+        # 获取最新版本号
+        LATEST_TAG=$(curl -sL "https://api.github.com/repos/AdguardTeam/AdGuardHome/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
+        # 获取原始文件名
+        ORIGINAL_NAME="AdGuardHome_linux_arm64.tar.gz"
+        # 设置输出变量
+        echo "version=$LATEST_TAG" >> $GITHUB_OUTPUT
+        echo "filename=$ORIGINAL_NAME" >> $GITHUB_OUTPUT
+        echo "release_name=AdGuardHome ARM64 UPX版 ($LATEST_TAG)" >> $GITHUB_OUTPUT
 
-      - name: Download latest AdGuardHome ARM64 release
-        uses: robinraju/release-downloader@v1
-        with:
-          repository: 'AdguardTeam/AdGuardHome'
-          latest: true
-          fileName: 'AdGuardHome_linux_arm64.tar.gz'
+    - name: 下载官方安装包
+      run: |
+        wget "https://github.com/AdguardTeam/AdGuardHome/releases/download/${{ steps.version_info.outputs.version }}/${{ steps.version_info.outputs.filename }}"
 
-      - name: Extract AdGuardHome
-        run: |
-          tar -xvf AdGuardHome_linux_arm64.tar.gz
-          ls -l AdGuardHome
+    - name: 解压并压缩二进制文件
+      run: |
+        # 解压原始包
+        tar -xzf "${{ steps.version_info.outputs.filename }}"
+        
+        # 使用 UPX 压缩可执行文件 (LZMA 最佳压缩)
+        upx --best --lzma AdGuardHome/AdGuardHome -o AdGuardHome/AdGuardHome.upx
+        
+        # 替换原始文件
+        mv AdGuardHome/AdGuardHome.upx AdGuardHome/AdGuardHome
+        
+        # 重新打包为同名 gzip
+        tar -czf "${{ steps.version_info.outputs.filename }}" AdGuardHome
 
-      - name: Compress with UPX
-        run: |
-          upx --best AdGuardHome/AdGuardHome
-          mv AdGuardHome/AdGuardHome ./AdGuardHome-arm64-compressed
+    - name: 发布到 GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ${{ steps.version_info.outputs.filename }}
+        tag_name: "arm64-upx-${{ steps.version_info.outputs.version }}"
+        name: ${{ steps.version_info.outputs.release_name }}
+        body: |
+          🔧 自动生成的 UPX 压缩版 AdGuardHome
+          - 源版本: ${{ steps.version_info.outputs.version }}
+          - 架构: ARM64
+          - 压缩方式: UPX --best --lzma
+          - 生成时间: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: adguardhome-v${{ github.run_number }}
-          release_name: AdGuardHome ARM64 Compressed v${{ github.run_number }}
-          draft: false
-          prerelease: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./AdGuardHome-arm64-compressed
-          asset_name: AdGuardHome-arm64-compressed
-          asset_content_type: application/octet-stream
+    - name: 清理临时文件
+      run: |
+        rm -rf AdGuardHome*
