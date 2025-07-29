@@ -1,0 +1,56 @@
+name: Build and Release Compressed AdGuardHome (ARM64)
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 每天 UTC 时间 0 点运行
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install UPX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx
+
+      - name: Download latest AdGuardHome ARM64 release
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'AdguardTeam/AdGuardHome'
+          latest: true
+          fileName: 'AdGuardHome_linux_arm64.tar.gz'
+
+      - name: Extract AdGuardHome
+        run: |
+          tar -xvf AdGuardHome_linux_arm64.tar.gz
+          ls -l AdGuardHome
+
+      - name: Compress with UPX
+        run: |
+          upx --best AdGuardHome/AdGuardHome
+          mv AdGuardHome/AdGuardHome ./AdGuardHome-arm64-compressed
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: adguardhome-v${{ github.run_number }}
+          release_name: AdGuardHome ARM64 Compressed v${{ github.run_number }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./AdGuardHome-arm64-compressed
+          asset_name: AdGuardHome-arm64-compressed
+          asset_content_type: application/octet-stream
