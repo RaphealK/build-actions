@@ -95,7 +95,13 @@ jobs:
       id: package
       run: |
         cd openwrt
-        make download -j8
+        ok=0
+        for i in 1 2 3; do
+          if make download -j8; then ok=1; break; fi
+          echo "下载失败,第 $i/3 次重试..."
+          [ "$i" -lt 3 ] && sleep 15
+        done
+        [ "$ok" = 1 ] || { echo "下载 3 次均失败"; exit 1; }
     
     - name: 开始编译固件
       id: compile
