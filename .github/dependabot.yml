@@ -1,0 +1,11 @@
+# Dependabot:每周检查 GitHub Actions 的版本更新,自动提 PR 升级已钉 SHA。
+# (common@mishi 是分支引用、不由 Dependabot 管;本仓库本就手动跟随 common。)
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"

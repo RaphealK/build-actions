@@ -38,7 +38,7 @@ jobs:
 
     steps:
     - name: 释放Ubuntu磁盘空间
-      uses: danshui-git/free-disk-space@main
+      uses: danshui-git/free-disk-space@477877511283e5bfaabbc80bb93ea037c5358f15
       with:
         remove_android: true
         remove_dotnet: true
@@ -85,7 +85,7 @@ jobs:
         
     - name: 缓存加速
       if: env.CACHEWRTBUILD_SWITCH == 'true'
-      uses: stupidloud/cachewrtbuild@main
+      uses: stupidloud/cachewrtbuild@b729f807837dbc3455d02fd35192660d9b662121
       with:
         ccache: 'true'
         mixkey: "${{ env.TARGET_PROFILE }}"
