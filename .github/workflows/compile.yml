@@ -23,6 +23,10 @@ jobs:
   build:
     name: 编译 "${{matrix.target}}"
     runs-on: ubuntu-22.04
+    concurrency:
+      # 同一 target 的重复触发会取消旧 run，省 minutes；想要"跑完再排队"则改 cancel-in-progress 为 false
+      group: compile-${{ matrix.target }}
+      cancel-in-progress: true
     if: ${{ github.event.repository.owner.id }} == ${{ github.event.sender.id }}
     
     env:
