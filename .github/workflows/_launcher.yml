@@ -1,0 +1,125 @@
+#
+# reusable workflow:各源码启动器的共享步骤。由各源码的薄 caller(如 Official.yml)调用。
+# 实验性:先用 Official 验证 common@mishi / common@trigger 在 reusable 上下文下正常,再铺开。
+# hm-ax6000.yml 等其他启动器暂不改动。
+#
+
+name: _reusable_launcher
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: "源码名(= build/ 下的文件夹名 = matrix target)"
+        type: string
+        required: true
+      REPO_BRANCH:
+        type: string
+        required: true
+      CONFIG_FILE:
+        type: string
+        required: true
+      INFORMATION_NOTICE:
+        type: string
+        required: true
+      KEEP_WORKFLOWS:
+        type: string
+        required: true
+      KEEP_RELEASES:
+        type: string
+        required: true
+      SSH_ACTION:
+        type: boolean
+        default: false
+      UPLOAD_FIRMWARE:
+        type: boolean
+        default: true
+      UPLOAD_RELEASE:
+        type: boolean
+        default: true
+      CACHEWRTBUILD_SWITCH:
+        type: boolean
+        default: true
+      UPDATE_FIRMWARE_ONLINE:
+        type: boolean
+        default: true
+
+env:
+  GIT_REPOSITORY: ${{ github.repository }}
+  REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
+  PUSH_PLUS_TOKEN: ${{ secrets.PUSH_PLUS_TOKEN }}
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    name: 启动"${{ inputs.target }}-${{ inputs.REPO_BRANCH }}"触发编译
+    runs-on: ubuntu-22.04
+    if: ${{ github.event.repository.owner.id == github.event.sender.id }}
+
+    # 直接从 inputs 设进 job env:保证 ${REPO_BRANCH} 等 shell 引用一定有值,
+    # 不依赖 common@mishi 是否在 reusable 上下文里导出它们(降低不确定性)。
+    env:
+      FOLDER_NAME: ${{ inputs.target }}
+      REPO_BRANCH: ${{ inputs.REPO_BRANCH }}
+      CONFIG_FILE: ${{ inputs.CONFIG_FILE }}
+      KEEP_WORKFLOWS: ${{ inputs.KEEP_WORKFLOWS }}
+      KEEP_RELEASES: ${{ inputs.KEEP_RELEASES }}
+
+    steps:
+    - name: 准备结束
+      uses: actions/checkout@v4
+
+    - name: 检测密匙/文件/版本
+      uses: 281677160/common@mishi
+
+    - name: 部署编译环境
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo -E apt-get -qq update -y
+        sudo -E apt-get -qq install -y gawk git gettext libssl-dev xsltproc zip git-core wget curl grep python2.7 python3 python3-pip libpython3-dev
+        sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /${{ env.DIY_WORK }}
+        sudo chown $USER:$GROUPS /${{ env.DIY_WORK }}
+
+    - name: 下载"${{ inputs.target }}-${{ inputs.REPO_BRANCH }}"源码
+      working-directory: /${{ env.DIY_WORK }}
+      run: |
+        git clone -q -b "${REPO_BRANCH}" --single-branch "${REPO_URL}" openwrt
+        ln -sf /${{ env.DIY_WORK }}/openwrt ${GITHUB_WORKSPACE}/openwrt
+        bash ${{ env.COMMON_SH }} Diy_feedsconf
+        echo "SHANG_CHUAN=true" >> ${GITHUB_ENV}
+
+    - name: 公告
+      continue-on-error: true
+      uses: 281677160/common@message
+
+    - name: 运行其他和SSH远程(make menuconfig)
+      id: info
+      uses: 281677160/common@need
+
+    - name: 编译信息
+      continue-on-error: true
+      if: env.COMPILATION_INFORMATION == 'true'
+      uses: 281677160/common@message
+
+    - name: 清理releases和workflows
+      continue-on-error: true
+      uses: danshui-git/delete-releases-workflows@3a6ab40911712dcb6f4c540ccd3c1166f15835b5
+      with:
+        delete_releases: true
+        prerelease_option: all
+        releases_keep_keyword: targz/Update
+        releases_keep_latest: ${{ env.KEEP_RELEASES }}
+        delete_tags: true
+        max_releases_fetch: 300
+        delete_workflows: true
+        workflows_keep_latest: ${{ env.KEEP_WORKFLOWS }}
+        max_workflows_fetch: 300
+        repo: ${{ github.repository }}
+        gh_token: ${{ secrets.REPO_TOKEN }}
+
+    - name: 触发启动"${{ inputs.target }}"开始编译
+      if: steps.info.outcome == 'success'
+      uses: 281677160/common@trigger
