@@ -15,8 +15,8 @@ export Kernel_partition_size="0"            # 内核分区大小,每个机型默
 export Rootfs_partition_size="0"            # 系统分区大小,每个机型默认值不一样 (填写您想要的数值,默认一般300左右,数值以MB计算，填0为不作修改),如果你不懂就填0
 
 # 默认主题设置
-export Mandatory_theme="argon"              # 将bootstrap替换您需要的主题为必选主题(可自行更改您要的,源码要带此主题就行,填写名称也要写对) (填写主题名称,填0为不作修改)
-export Default_theme="argon"                # 多主题时,选择某主题为默认第一主题 (填写主题名称,填0为不作修改)
+export Mandatory_theme="aurora"              # 将bootstrap替换您需要的主题为必选主题(可自行更改您要的,源码要带此主题就行,填写名称也要写对) (填写主题名称,填0为不作修改)
+export Default_theme="aurora"                # 多主题时,选择某主题为默认第一主题 (填写主题名称,填0为不作修改)
 
 # 旁路由选项
 export Gateway_Settings="0"                 # 旁路由设置 IPv4 网关(填入您的网关IP为启用)(填0为不作修改)
@@ -97,5 +97,7 @@ EOF
 
 git clone  https://github.com/gdy666/luci-app-lucky.git package/lucky
 git clone  https://github.com/linkease/istore.git package/luci-app-store
-git clone https://github.com/gngpp/luci-theme-design.git  package/luci-theme-design
-git clone https://github.com/gngpp/luci-app-design-config.git package/luci-app-design-config
+# luci-theme-aurora(eamonxg 源;Vite/Tailwind 现代主题,htdocs 已预编译,OpenWrt 直接装;最近提交 2026-08-03)
+git clone https://github.com/eamonxg/luci-theme-aurora.git package/luci-theme-aurora
+# luci-app-adguardhome 1.8-11(rufengsuixing 源;核心装好在 LuCI 界面里下载,与设备当前一致)
+git clone -b "1.8-11" https://github.com/rufengsuixing/luci-app-adguardhome.git package/luci-app-adguardhome
