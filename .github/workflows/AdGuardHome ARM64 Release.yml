@@ -25,6 +25,8 @@ jobs:
         echo "version=$LATEST_TAG" >> $GITHUB_OUTPUT
         echo "filename=$ORIGINAL_NAME" >> $GITHUB_OUTPUT
         echo "release_name=AdGuardHome ARM64 UPX版 ($LATEST_TAG)" >> $GITHUB_OUTPUT
+        # 在 shell 中生成时间戳，避免在 with.body 里写 $(date) 不被展开
+        echo "build_time=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
     - name: 下载官方安装包
       run: |
@@ -55,7 +57,7 @@ jobs:
           - 源版本: ${{ steps.version_info.outputs.version }}
           - 架构: ARM64
           - 压缩方式: UPX --best --lzma
-          - 生成时间: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          - 生成时间: ${{ steps.version_info.outputs.build_time }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
