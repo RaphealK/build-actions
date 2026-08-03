@@ -9,7 +9,7 @@ on:
     branches:
       - main
     paths:
-      - 'build/Official/relevance/start'
+      - 'build/hm-ax6000/relevance/start'
 
 env:
   GIT_REPOSITORY: ${{github.repository}}
@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-       target: [Official]
+       target: [hm-ax6000]
 
     steps:
     - name: 释放Ubuntu磁盘空间
