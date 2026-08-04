@@ -99,5 +99,7 @@ git clone  https://github.com/gdy666/luci-app-lucky.git package/lucky
 git clone  https://github.com/linkease/istore.git package/luci-app-store
 # luci-theme-aurora(eamonxg 源;Vite/Tailwind 现代主题,htdocs 已预编译,OpenWrt 直接装;最近提交 2026-08-03)
 git clone https://github.com/eamonxg/luci-theme-aurora.git package/luci-theme-aurora
+# luci-app-aurora-config(Aurora 主题的设置页,eamonxg 源;htdocs 预编译)
+git clone https://github.com/eamonxg/luci-app-aurora-config.git package/luci-app-aurora-config
 # luci-app-adguardhome 1.8-11(rufengsuixing 源;核心装好在 LuCI 界面里下载,与设备当前一致)
 git clone -b "1.8-11" https://github.com/rufengsuixing/luci-app-adguardhome.git package/luci-app-adguardhome
