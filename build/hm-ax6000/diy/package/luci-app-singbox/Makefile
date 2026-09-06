@@ -4,6 +4,7 @@
 #
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/package.mk
 
 PKG_NAME:=luci-app-singbox
 PKG_VERSION:=1.0.0
