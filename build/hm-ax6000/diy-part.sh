@@ -103,9 +103,8 @@ git clone  https://github.com/linkease/istore.git package/luci-app-store
 git clone https://github.com/eamonxg/luci-theme-aurora.git package/luci-theme-aurora
 # luci-app-aurora-config(Aurora 主题的设置页,eamonxg 源;htdocs 预编译)
 git clone https://github.com/eamonxg/luci-app-aurora-config.git package/luci-app-aurora-config
-# luci-app-tailscale(asvow 源;tailscale 本体在 packages feed 无需克隆)
+# tailscale不再单独安装(sing-box full版自带with_tailscale出站)
 # sing-box管理页为自写的luci-app-singbox,在diy/package/luci-app-singbox,随源码树带入
-git clone https://github.com/asvow/luci-app-tailscale.git package/luci-app-tailscale
 
 # sing-box升级到最新正式版(覆盖feed里的旧版;版本号/源码哈希每次编译自动获取)
 # 新版要求更高Go时不动feed工具链(其自举链编不了新Go),改为开启GOTOOLCHAIN自动切换,编译期按go.mod自动拉取官方预编译Go
@@ -193,8 +192,8 @@ fi
 
 # 首开机自定义WiFi名称/密码(密码走GitHub Secret: WIFI_PASSWORD,真实密码不写进仓库)
 # 下方SSID自行修改,留空""则不改对应频段的名称;加密方式要WPA2/WPA3混合就把psk2改成sae-mixed
-WIFI_SSID_2G="K-Wrt"
-WIFI_SSID_5G="K-Wrt-5G"
+WIFI_SSID_2G="KsRouter"
+WIFI_SSID_5G="KsRouter-5G"
 WIFI_ENC="psk2"
 if [ -n "$WIFI_PASSWORD" ]; then
 	wifi_esc() { printf '%s' "$1" | sed 's/[&|]/\\&/g'; }
