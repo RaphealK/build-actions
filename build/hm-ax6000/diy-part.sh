@@ -125,6 +125,11 @@ if [ -f "$SB_MK" ] && [ -n "$SB_VER" ]; then
 	else
 		echo "警告:未找到GOTOOLCHAIN=local,若sing-box编译报Go版本过旧需人工检查"
 	fi
+	# 仅本地构建(LOCAL_BUILD=1):工具链/模块下载走goproxy.cn,绕开dl.google.com不可达
+	if [ "${LOCAL_BUILD:-0}" = "1" ] && grep -q "GOENV=off" "$GP_MK" && ! grep -q "GOPROXY=" "$GP_MK"; then
+		sed -i "s|\tGOENV=off \\\\|\tGOENV=off \\\\\n\tGOPROXY=https://goproxy.cn,direct \\\\|" "$GP_MK"
+		echo "已注入GOPROXY=goproxy.cn(本地构建)"
+	fi
 	# UPX压缩编译产物(约减70%体积);在包的eval前注入Build/Compile覆盖,编译后压缩
 	command -v upx >/dev/null 2>&1 || sudo apt-get install -y -qq upx-ucl >/dev/null 2>&1
 	if command -v upx >/dev/null 2>&1; then
