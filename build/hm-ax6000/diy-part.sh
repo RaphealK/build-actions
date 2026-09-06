@@ -79,6 +79,7 @@ grep -rl '"带宽监控"' . | xargs -r sed -i 's?"带宽监控"?"监控"?g'
 
 
 # 整理固件包时候,删除您不想要的固件或者文件,让它不需要上传到Actions空间(根据编译机型变化,自行调整删除名称)
+# 本机只用squashfs-sysupgrade.bin,其余全删(每行为子串匹配模式,不能含TARGET_BOARD字样)
 cat >"$CLEAR_PATH" <<-EOF
 packages
 config.buildinfo
@@ -86,9 +87,10 @@ feeds.buildinfo
 sha256sums
 version.buildinfo
 profiles.json
-openwrt-x86-64-generic-kernel.bin
-openwrt-x86-64-generic.manifest
-openwrt-x86-64-generic-squashfs-rootfs.img.gz
+manifest
+initramfs
+bl2
+ipk
 EOF
 
 # 在线更新时，删除不想保留固件的某个文件，在EOF跟EOF之间加入删除代码，记住这里对应的是固件的文件路径，比如： rm -rf /etc/config/luci
@@ -103,3 +105,76 @@ git clone https://github.com/eamonxg/luci-theme-aurora.git package/luci-theme-au
 git clone https://github.com/eamonxg/luci-app-aurora-config.git package/luci-app-aurora-config
 # luci-app-adguardhome 1.8-11(rufengsuixing 源;核心装好在 LuCI 界面里下载,与设备当前一致)
 git clone -b "1.8-11" https://github.com/rufengsuixing/luci-app-adguardhome.git package/luci-app-adguardhome
+
+# 首开机强制修改后台IP/掩码/主机名(上游common对mt798x源码的sed机制失效,这里用uci-defaults兜底)
+# 复用上方Ipv4_ipaddr/Netmask_netm/Op_name的值,填0则维持源码默认
+if [ -n "$Ipv4_ipaddr" ] && [ "$Ipv4_ipaddr" != "0" ] || [ -n "$Op_name" ] && [ "$Op_name" != "0" ]; then
+	mkdir -p files/etc/uci-defaults
+	{
+		echo '#!/bin/sh'
+		echo '# 首开机把后台IP/主机名改成diy-part.sh里设置的值(上游sed机制在本源码失效的兜底)'
+		if [ -n "$Ipv4_ipaddr" ] && [ "$Ipv4_ipaddr" != "0" ]; then
+			echo "uci set network.lan.ipaddr='$Ipv4_ipaddr'"
+			if [ -n "$Netmask_netm" ] && [ "$Netmask_netm" != "0" ]; then
+				echo "uci set network.lan.netmask='$Netmask_netm'"
+			fi
+		fi
+		if [ -n "$Op_name" ] && [ "$Op_name" != "0" ]; then
+			echo "uci set system.@system[0].hostname='$Op_name'"
+		fi
+		echo 'uci commit network'
+		echo 'uci commit system'
+	} >files/etc/uci-defaults/99-zzz-lan-ip
+	echo "已生成 files/etc/uci-defaults/99-zzz-lan-ip(后台IP=$Ipv4_ipaddr 主机名=$Op_name)"
+fi
+
+# 首开机写入DHCP静态租约(表在下方维护:格式"名字|MAC|IP",一行一台,带#的行和空行跳过)
+DHCP_STATIC="
+nas|AA:BB:CC:DD:EE:01|192.168.31.10
+atv|AA:BB:CC:DD:EE:02|192.168.31.20
+"
+if [ -n "$(echo "$DHCP_STATIC" |tr -d '[:space:]#' )" ]; then
+	mkdir -p files/etc/uci-defaults
+	{
+		echo '#!/bin/sh'
+		echo '# 首开机写入DHCP静态租约(表在diy-part.sh的DHCP_STATIC里维护)'
+		echo "$DHCP_STATIC" | while IFS='|' read -r n m i; do
+			case "$n" in ''|'#'*) continue ;; esac
+			printf "uci add dhcp host\nuci set dhcp.@host[-1].name='%s'\nuci set dhcp.@host[-1].mac='%s'\nuci set dhcp.@host[-1].ip='%s'\n" "$n" "$m" "$i"
+		done
+		echo 'uci commit dhcp'
+	} >files/etc/uci-defaults/99-zzz-dhcp-static
+	echo "已生成 files/etc/uci-defaults/99-zzz-dhcp-static(静态租约$(echo "$DHCP_STATIC" |grep -v '^[[:space:]]*#' |grep -c '|')条)"
+fi
+
+# 首开机自定义WiFi名称/密码(密码走GitHub Secret: WIFI_PASSWORD,真实密码不写进仓库)
+# 下方SSID自行修改,留空""则不改对应频段的名称;加密方式要WPA2/WPA3混合就把psk2改成sae-mixed
+WIFI_SSID_2G="K-Wrt"
+WIFI_SSID_5G="K-Wrt-5G"
+WIFI_ENC="psk2"
+if [ -n "$WIFI_PASSWORD" ]; then
+	wifi_esc() { printf '%s' "$1" | sed 's/[&|]/\\&/g'; }
+	mkdir -p files/etc/uci-defaults
+	cat >files/etc/uci-defaults/99-wifi-custom <<'WIFIEOF'
+#!/bin/sh
+# 首开机把无线改为自定义名称/密码(编译期由Secret注入生成,真实密码不进代码仓库)
+[ -f /etc/config/wireless ] || exit 1
+for iface in $(uci show wireless 2>/dev/null | sed -n 's/^\(wireless\.[^.]*\)=wifi-iface$/\1/p'); do
+	[ "$(uci -q get "$iface".mode)" = "ap" ] || continue
+	dev=$(uci -q get "$iface".device)
+	case "$(uci -q get "wireless.$dev".band)" in
+		5g|5G) [ -n '__SSID5G__' ] && uci set "$iface".ssid='__SSID5G__' ;;
+		*)     [ -n '__SSID2G__' ] && uci set "$iface".ssid='__SSID2G__' ;;
+	esac
+	[ -n '__ENC__' ] && uci set "$iface".encryption='__ENC__'
+	uci set "$iface".key='__PASS__'
+done
+uci commit wireless
+WIFIEOF
+	sed -i -e "s|__SSID2G__|$(wifi_esc "$WIFI_SSID_2G")|g" \
+		-e "s|__SSID5G__|$(wifi_esc "$WIFI_SSID_5G")|g" \
+		-e "s|__ENC__|$(wifi_esc "$WIFI_ENC")|g" \
+		-e "s|__PASS__|$(wifi_esc "$WIFI_PASSWORD")|g" \
+		files/etc/uci-defaults/99-wifi-custom
+	echo "已生成 files/etc/uci-defaults/99-wifi-custom(WiFi自定义)"
+fi
