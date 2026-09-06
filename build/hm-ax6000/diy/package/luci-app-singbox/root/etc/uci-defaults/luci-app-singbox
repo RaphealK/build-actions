@@ -1,0 +1,26 @@
+#!/bin/sh
+# 兜底确保sing-box配置文件存在(正常情况下sing-box包安装时自带)
+
+[ -f /etc/sing-box/config.json ] || {
+	mkdir -p /etc/sing-box
+	cat > /etc/sing-box/config.json <<'EOF'
+{
+	"log": {
+		"level": "info",
+		"timestamp": true
+	},
+	"inbounds": [],
+	"outbounds": [
+		{
+			"type": "direct",
+			"tag": "direct"
+		}
+	],
+	"route": {
+		"final": "direct"
+	}
+}
+EOF
+}
+
+exit 0

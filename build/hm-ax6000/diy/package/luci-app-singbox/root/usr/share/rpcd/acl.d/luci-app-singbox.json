@@ -1,0 +1,22 @@
+{
+	"luci-app-singbox": {
+		"description": "Grant access to sing-box management",
+		"read": {
+			"uci": [ "sing-box" ],
+			"file": {
+				"/etc/init.d/sing-box": [ "exec" ],
+				"/usr/bin/sing-box": [ "exec" ],
+				"/sbin/logread": [ "exec" ],
+				"/usr/bin/logread": [ "exec" ],
+				"/etc/sing-box/config.json": [ "read" ]
+			}
+		},
+		"write": {
+			"uci": [ "sing-box" ],
+			"file": {
+				"/etc/init.d/sing-box": [ "exec" ],
+				"/etc/sing-box/config.json": [ "write" ]
+			}
+		}
+	}
+}

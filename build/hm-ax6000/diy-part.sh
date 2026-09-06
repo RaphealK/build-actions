@@ -103,8 +103,61 @@ git clone  https://github.com/linkease/istore.git package/luci-app-store
 git clone https://github.com/eamonxg/luci-theme-aurora.git package/luci-theme-aurora
 # luci-app-aurora-config(Aurora 主题的设置页,eamonxg 源;htdocs 预编译)
 git clone https://github.com/eamonxg/luci-app-aurora-config.git package/luci-app-aurora-config
-# luci-app-adguardhome 1.8-11(rufengsuixing 源;核心装好在 LuCI 界面里下载,与设备当前一致)
-git clone -b "1.8-11" https://github.com/rufengsuixing/luci-app-adguardhome.git package/luci-app-adguardhome
+# luci-app-tailscale(asvow 源;tailscale 本体在 packages feed 无需克隆)
+# sing-box管理页为自写的luci-app-singbox,在diy/package/luci-app-singbox,随源码树带入
+git clone https://github.com/asvow/luci-app-tailscale.git package/luci-app-tailscale
+
+# sing-box升级到最新正式版(覆盖feed里的旧版;版本号/源码哈希每次编译自动获取)
+# 新版若要求更高的Go工具链,则连golang feed一起升到最新稳定版,避免编译失败
+SB_MK="feeds/packages/net/sing-box/Makefile"
+GO_MK="feeds/packages/lang/golang/golang/Makefile"
+SB_VER="$(git ls-remote --tags --refs -q https://github.com/SagerNet/sing-box "v*" 2>/dev/null |sed 's|.*refs/tags/v||' |grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' |sort -V |tail -1)"
+if [ -f "$SB_MK" ] && [ -n "$SB_VER" ]; then
+	curl -sL "https://codeload.github.com/SagerNet/sing-box/tar.gz/v${SB_VER}" -o /tmp/sb-tar.tar.gz
+	SB_HASH="$(sha256sum /tmp/sb-tar.tar.gz |cut -d' ' -f1)"
+	SB_GOMIN="$(tar -xzOf /tmp/sb-tar.tar.gz "sing-box-$SB_VER/go.mod" 2>/dev/null |sed -n 's/^go \([0-9.]*\).*/\1/p')"
+	rm -f /tmp/sb-tar.tar.gz
+	sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=$SB_VER/" "$SB_MK"
+	sed -i "s/^PKG_HASH:=.*/PKG_HASH:=$SB_HASH/" "$SB_MK"
+	# UPX压缩编译产物(约减70%体积);在包的eval前注入Build/Compile覆盖,编译后压缩
+	command -v upx >/dev/null 2>&1 || sudo apt-get install -y -qq upx-ucl >/dev/null 2>&1
+	if command -v upx >/dev/null 2>&1; then
+		if ! grep -q "upx" "$SB_MK"; then
+			awk '
+			/^\$\(eval \$\(call BuildPackage,sing-box\)\)$/ && !ins {
+				print "define Build/Compile"
+				print "\t$(call GoPackage/Build/Compile)"
+				print "\tupx --best --lzma $(PKG_BUILD_DIR)/bin/sing-box"
+				print "endef"
+				print ""
+				ins=1
+			}
+			{ print }
+			' "$SB_MK" > "$SB_MK.tmp" && mv "$SB_MK.tmp" "$SB_MK"
+			echo "已注入UPX压缩步骤到sing-box编译"
+		fi
+	else
+		echo "警告:upx未安装成功,跳过sing-box压缩"
+	fi
+	echo "已把sing-box升级到v$SB_VER(源码哈希$SB_HASH)"
+	SB_GOMINOR="$(echo "$SB_GOMIN" |cut -d. -f1-2)"
+	GO_CUR="$(sed -n 's/^GO_VERSION_MAJOR_MINOR:=\([0-9.]*\).*/\1/p' "$GO_MK" 2>/dev/null)"
+	if [ -n "$SB_GOMINOR" ] && [ -n "$GO_CUR" ] && [ "$(printf '%s\n%s\n' "$GO_CUR" "$SB_GOMINOR" |sort -V |head -1)" != "$SB_GOMINOR" ] && [ -f "$GO_MK" ]; then
+		GO_DL="$(curl -s 'https://go.dev/dl/?mode=json')"
+		GO_NEW="$(echo "$GO_DL" |sed -n 's/.*"version": *"go\([0-9.]*\)".*/\1/p' |head -1)"
+		GO_SHA="$(echo "$GO_DL" |tr ',{}' '\n' |grep -A12 "\"filename\": *\"go${GO_NEW}.src.tar.gz\"" |sed -n 's/.*"sha256": *"\([a-f0-9]*\)".*/\1/p' |head -1)"
+		if [ -n "$GO_NEW" ] && [ -n "$GO_SHA" ]; then
+			sed -i "s/^GO_VERSION_MAJOR_MINOR:=.*/GO_VERSION_MAJOR_MINOR:=${GO_NEW%.*}/" "$GO_MK"
+			sed -i "s/^GO_VERSION_PATCH:=.*/GO_VERSION_PATCH:=${GO_NEW##*.}/" "$GO_MK"
+			sed -i "s/^PKG_HASH:=.*/PKG_HASH:=$GO_SHA/" "$GO_MK"
+			echo "sing-box要求Go≥$SB_GOMIN,已把Go工具链升级到$GO_NEW(源码哈希$GO_SHA)"
+		else
+			echo "警告:未能获取Go最新版信息,工具链维持$GO_CUR,sing-box $SB_VER可能编译失败"
+		fi
+	fi
+else
+	echo "警告:未找到feeds里的sing-box包或未取到最新版本号,跳过sing-box升级"
+fi
 
 # 首开机强制修改后台IP/掩码/主机名(上游common对mt798x源码的sed机制失效,这里用uci-defaults兜底)
 # 复用上方Ipv4_ipaddr/Netmask_netm/Op_name的值,填0则维持源码默认
