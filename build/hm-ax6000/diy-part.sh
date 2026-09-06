@@ -127,7 +127,7 @@ if [ -f "$SB_MK" ] && [ -n "$SB_VER" ]; then
 			/^\$\(eval \$\(call BuildPackage,sing-box\)\)$/ && !ins {
 				print "define Build/Compile"
 				print "\t$(call GoPackage/Build/Compile)"
-				print "\tupx --best --lzma $(PKG_BUILD_DIR)/bin/sing-box"
+				print "\tupx --best --lzma $(GO_PKG_BUILD_BIN_DIR)/sing-box"
 				print "endef"
 				print ""
 				ins=1
