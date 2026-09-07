@@ -103,8 +103,9 @@ git clone  https://github.com/linkease/istore.git package/luci-app-store
 git clone https://github.com/eamonxg/luci-theme-aurora.git package/luci-theme-aurora
 # luci-app-aurora-config(Aurora 主题的设置页,eamonxg 源;htdocs 预编译)
 git clone https://github.com/eamonxg/luci-app-aurora-config.git package/luci-app-aurora-config
-# tailscale不再单独安装(sing-box full版自带with_tailscale出站)
+# luci-app-tailscale(asvow 源;tailscale 本体在 packages feed 无需克隆)
 # sing-box管理页为自写的luci-app-singbox,在diy/package/luci-app-singbox,随源码树带入
+git clone https://github.com/asvow/luci-app-tailscale.git package/luci-app-tailscale
 
 # sing-box升级到最新正式版(覆盖feed里的旧版;版本号/源码哈希每次编译自动获取)
 # 新版要求更高Go时不动feed工具链(其自举链编不了新Go),改为开启GOTOOLCHAIN自动切换,编译期按go.mod自动拉取官方预编译Go
