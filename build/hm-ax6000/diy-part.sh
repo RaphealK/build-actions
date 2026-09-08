@@ -170,6 +170,10 @@ if [ -n "$TS_TAG" ] && curl -sL "https://github.com/GuNanOvO/openwrt-tailscale/r
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/package.mk
 
+PKG_NAME:=tailscale-prebuilt
+PKG_VERSION:=__TS_TAG__
+PKG_LICENSE:=BSD-3-Clause
+
 define Package/tailscale-prebuilt
   SECTION:=net
   CATEGORY:=Network
@@ -177,6 +181,7 @@ define Package/tailscale-prebuilt
   TITLE:=Tailscale prebuilt (GuNanOvO optimized build)
   DEPENDS:=+ca-bundle +kmod-tun
   PROVIDES:=tailscale
+  VERSION:=__TS_TAG__
   PKGARCH:=aarch64_cortex-a53
 endef
 
@@ -201,6 +206,7 @@ endef
 
 $(eval $(call BuildPackage,tailscale-prebuilt))
 MKEOF
+	sed -i "s/__TS_TAG__/$TS_TAG/g" "$TS_PKG/Makefile"
 	echo "已烘焙tailscale-prebuilt v$TS_TAG(GuNanOvO预编译,~6.5MB)"
 	rm -rf /tmp/tsx
 else
