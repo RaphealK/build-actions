@@ -119,6 +119,8 @@ if [ "${LOCAL_BUILD:-0}" = "1" ] && grep -q "GOENV=off" "$GP_MK" && ! grep -q "G
 	sed -i "s|\tGOENV=off \\\\|\tGOENV=off \\\\\n\tGOPROXY=https://goproxy.cn,direct \\\\|" "$GP_MK"
 	echo "已注入GOPROXY=goproxy.cn(本地构建)"
 fi
+# UPX安装(供sing-box/tailscale压缩共用)
+command -v upx >/dev/null 2>&1 || sudo apt-get install -y -qq upx-ucl >/dev/null 2>&1
 
 # sing-box升级到最新正式版(覆盖feed里的旧版;版本号/源码哈希每次编译自动获取)
 SB_MK="feeds/packages/net/sing-box/Makefile"
@@ -131,7 +133,6 @@ if [ -f "$SB_MK" ] && [ -n "$SB_VER" ]; then
 	sed -i "s/^PKG_HASH:=.*/PKG_HASH:=$SB_HASH/" "$SB_MK"
 	echo "已把sing-box升级到v$SB_VER(源码哈希$SB_HASH)"
 	# UPX压缩编译产物(约减70%体积);在包的eval前注入Build/Compile覆盖,编译后压缩
-	command -v upx >/dev/null 2>&1 || sudo apt-get install -y -qq upx-ucl >/dev/null 2>&1
 	if command -v upx >/dev/null 2>&1; then
 		if ! grep -q "upx" "$SB_MK"; then
 			awk '
@@ -164,6 +165,21 @@ if [ -f "$TS_MK" ] && [ -n "$TS_VER" ]; then
 	sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=$TS_VER/" "$TS_MK"
 	sed -i "s/^PKG_HASH:=.*/PKG_HASH:=$TS_HASH/" "$TS_MK"
 	echo "已把tailscale升级到v$TS_VER(源码哈希$TS_HASH)"
+	# UPX压缩(二进制为tailscaled,/usr/sbin/tailscale只是符号链接)
+	if command -v upx >/dev/null 2>&1 && ! grep -q "upx" "$TS_MK"; then
+		awk '
+		/^\$\(eval \$\(call BuildPackage,tailscale\)\)$/ && !ins {
+			print "define Build/Compile"
+			print "\t$(call GoPackage/Build/Compile)"
+			print "\tupx --best --lzma $(GO_PKG_BUILD_BIN_DIR)/tailscaled"
+			print "endef"
+			print ""
+			ins=1
+		}
+		{ print }
+		' "$TS_MK" > "$TS_MK.tmp" && mv "$TS_MK.tmp" "$TS_MK"
+		echo "已注入UPX压缩步骤到tailscale编译"
+	fi
 else
 	echo "警告:未找到feeds里的tailscale包或未取到最新版本号,跳过tailscale升级"
 fi
