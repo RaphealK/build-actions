@@ -107,10 +107,21 @@ git clone https://github.com/eamonxg/luci-app-aurora-config.git package/luci-app
 # sing-box管理页为自写的luci-app-singbox,在diy/package/luci-app-singbox,随源码树带入
 git clone https://github.com/asvow/luci-app-tailscale.git package/luci-app-tailscale
 
-# sing-box升级到最新正式版(覆盖feed里的旧版;版本号/源码哈希每次编译自动获取)
-# 新版要求更高Go时不动feed工具链(其自举链编不了新Go),改为开启GOTOOLCHAIN自动切换,编译期按go.mod自动拉取官方预编译Go
-SB_MK="feeds/packages/net/sing-box/Makefile"
+# Go工具链自动切换+本地GOPROXY(对所有Go包生效;新版sing-box/tailscale要求更高Go,feed自举链编不了新Go)
 GP_MK="feeds/packages/lang/golang/golang-package.mk"
+if [ -f "$GP_MK" ] && grep -q "GOTOOLCHAIN=local" "$GP_MK"; then
+	sed -i "s/GOTOOLCHAIN=local/GOTOOLCHAIN=auto/" "$GP_MK"
+	echo "已开启GOTOOLCHAIN自动切换"
+else
+	echo "警告:未找到GOTOOLCHAIN=local,若Go包编译报Go版本过旧需人工检查"
+fi
+if [ "${LOCAL_BUILD:-0}" = "1" ] && grep -q "GOENV=off" "$GP_MK" && ! grep -q "GOPROXY=" "$GP_MK"; then
+	sed -i "s|\tGOENV=off \\\\|\tGOENV=off \\\\\n\tGOPROXY=https://goproxy.cn,direct \\\\|" "$GP_MK"
+	echo "已注入GOPROXY=goproxy.cn(本地构建)"
+fi
+
+# sing-box升级到最新正式版(覆盖feed里的旧版;版本号/源码哈希每次编译自动获取)
+SB_MK="feeds/packages/net/sing-box/Makefile"
 SB_VER="$(git ls-remote --tags --refs -q https://github.com/SagerNet/sing-box "v*" 2>/dev/null |sed 's|.*refs/tags/v||' |grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' |sort -V |tail -1)"
 if [ -f "$SB_MK" ] && [ -n "$SB_VER" ]; then
 	curl -sL "https://codeload.github.com/SagerNet/sing-box/tar.gz/v${SB_VER}" -o /tmp/sb-tar.tar.gz
@@ -119,18 +130,6 @@ if [ -f "$SB_MK" ] && [ -n "$SB_VER" ]; then
 	sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=$SB_VER/" "$SB_MK"
 	sed -i "s/^PKG_HASH:=.*/PKG_HASH:=$SB_HASH/" "$SB_MK"
 	echo "已把sing-box升级到v$SB_VER(源码哈希$SB_HASH)"
-	# 开启Go工具链自动切换(golang-package.mk默认锁local,新版sing-box会因Go过旧而编译失败)
-	if [ -f "$GP_MK" ] && grep -q "GOTOOLCHAIN=local" "$GP_MK"; then
-		sed -i "s/GOTOOLCHAIN=local/GOTOOLCHAIN=auto/" "$GP_MK"
-		echo "已开启GOTOOLCHAIN自动切换"
-	else
-		echo "警告:未找到GOTOOLCHAIN=local,若sing-box编译报Go版本过旧需人工检查"
-	fi
-	# 仅本地构建(LOCAL_BUILD=1):工具链/模块下载走goproxy.cn,绕开dl.google.com不可达
-	if [ "${LOCAL_BUILD:-0}" = "1" ] && grep -q "GOENV=off" "$GP_MK" && ! grep -q "GOPROXY=" "$GP_MK"; then
-		sed -i "s|\tGOENV=off \\\\|\tGOENV=off \\\\\n\tGOPROXY=https://goproxy.cn,direct \\\\|" "$GP_MK"
-		echo "已注入GOPROXY=goproxy.cn(本地构建)"
-	fi
 	# UPX压缩编译产物(约减70%体积);在包的eval前注入Build/Compile覆盖,编译后压缩
 	command -v upx >/dev/null 2>&1 || sudo apt-get install -y -qq upx-ucl >/dev/null 2>&1
 	if command -v upx >/dev/null 2>&1; then
@@ -153,6 +152,20 @@ if [ -f "$SB_MK" ] && [ -n "$SB_VER" ]; then
 	fi
 else
 	echo "警告:未找到feeds里的sing-box包或未取到最新版本号,跳过sing-box升级"
+fi
+
+# tailscale升级到最新正式版(同sing-box机制;feed无patches目录,版本平移无冲突)
+TS_MK="feeds/packages/net/tailscale/Makefile"
+TS_VER="$(git ls-remote --tags --refs -q https://github.com/tailscale/tailscale "v*" 2>/dev/null |sed 's|.*refs/tags/v||' |grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' |sort -V |tail -1)"
+if [ -f "$TS_MK" ] && [ -n "$TS_VER" ]; then
+	curl -sL "https://codeload.github.com/tailscale/tailscale/tar.gz/v${TS_VER}" -o /tmp/ts-tar.tar.gz
+	TS_HASH="$(sha256sum /tmp/ts-tar.tar.gz |cut -d' ' -f1)"
+	rm -f /tmp/ts-tar.tar.gz
+	sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=$TS_VER/" "$TS_MK"
+	sed -i "s/^PKG_HASH:=.*/PKG_HASH:=$TS_HASH/" "$TS_MK"
+	echo "已把tailscale升级到v$TS_VER(源码哈希$TS_HASH)"
+else
+	echo "警告:未找到feeds里的tailscale包或未取到最新版本号,跳过tailscale升级"
 fi
 
 # 首开机强制修改后台IP/掩码/主机名(上游common对mt798x源码的sed机制失效,这里用uci-defaults兜底)
