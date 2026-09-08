@@ -165,6 +165,10 @@ if [ -f "$TS_MK" ] && [ -n "$TS_VER" ]; then
 	sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=$TS_VER/" "$TS_MK"
 	sed -i "s/^PKG_HASH:=.*/PKG_HASH:=$TS_HASH/" "$TS_MK"
 	echo "已把tailscale升级到v$TS_VER(源码哈希$TS_HASH)"
+	# 体积优化:裁掉路由器用不到的功能+剥离符号表(与GuNanOvO/openwrt-tailscale同款裁剪,未裁剪构建约60-80MB)
+	sed -i "s/^GO_PKG_TAGS:=.*/GO_PKG_TAGS:=ts_include_cli,ts_omit_aws,ts_omit_bird,ts_omit_tap,ts_omit_kube,ts_omit_completion,ts_omit_taildrop,ts_omit_relayserver,ts_omit_webclient/" "$TS_MK"
+	grep -q "^GO_PKG_LDFLAGS:=-s -w" "$TS_MK" || sed -i "s/^GO_PKG_LDFLAGS:=/GO_PKG_LDFLAGS:=-s -w /" "$TS_MK"
+	echo "已应用tailscale体积裁剪(omit taildrop/relayserver/webclient等 + -s -w)"
 	# UPX压缩(二进制为tailscaled,/usr/sbin/tailscale只是符号链接)
 	if command -v upx >/dev/null 2>&1 && ! grep -q "upx" "$TS_MK"; then
 		awk '
