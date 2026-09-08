@@ -155,38 +155,58 @@ else
 	echo "警告:未找到feeds里的sing-box包或未取到最新版本号,跳过sing-box升级"
 fi
 
-# tailscale升级到最新正式版(同sing-box机制;feed无patches目录,版本平移无冲突)
-TS_MK="feeds/packages/net/tailscale/Makefile"
-TS_VER="$(git ls-remote --tags --refs -q https://github.com/tailscale/tailscale "v*" 2>/dev/null |sed 's|.*refs/tags/v||' |grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' |sort -V |tail -1)"
-if [ -f "$TS_MK" ] && [ -n "$TS_VER" ]; then
-	curl -sL "https://codeload.github.com/tailscale/tailscale/tar.gz/v${TS_VER}" -o /tmp/ts-tar.tar.gz
-	TS_HASH="$(sha256sum /tmp/ts-tar.tar.gz |cut -d' ' -f1)"
-	rm -f /tmp/ts-tar.tar.gz
-	sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=$TS_VER/" "$TS_MK"
-	sed -i "s/^PKG_HASH:=.*/PKG_HASH:=$TS_HASH/" "$TS_MK"
-	echo "已把tailscale升级到v$TS_VER(源码哈希$TS_HASH)"
-	# 体积优化:裁掉路由器用不到的功能+剥离符号表(与GuNanOvO/openwrt-tailscale同款裁剪,未裁剪构建约60-80MB)
-	sed -i "s/^GO_PKG_TAGS:=.*/GO_PKG_TAGS:=ts_include_cli,ts_omit_aws,ts_omit_bird,ts_omit_tap,ts_omit_kube,ts_omit_completion,ts_omit_taildrop,ts_omit_relayserver,ts_omit_webclient/" "$TS_MK"
-	grep -q "^GO_PKG_LDFLAGS:=-s -w" "$TS_MK" || sed -i "s/^GO_PKG_LDFLAGS:=/GO_PKG_LDFLAGS:=-s -w /" "$TS_MK"
-	echo "已应用tailscale体积裁剪(omit taildrop/relayserver/webclient等 + -s -w)"
-	# UPX压缩(二进制为tailscaled,/usr/sbin/tailscale只是符号链接)
-	if command -v upx >/dev/null 2>&1 && ! grep -q "upx" "$TS_MK"; then
-		awk '
-		/^\$\(eval \$\(call BuildPackage,tailscale\)\)$/ && !ins {
-			print "define Build/Compile"
-			print "\t$(call GoPackage/Build/Compile)"
-			print "\tupx --best --lzma $(GO_PKG_BUILD_BIN_DIR)/tailscaled"
-			print "endef"
-			print ""
-			ins=1
-		}
-		{ print }
-		' "$TS_MK" > "$TS_MK.tmp" && mv "$TS_MK.tmp" "$TS_MK"
-		echo "已注入UPX压缩步骤到tailscale编译"
-	fi
+# tailscale改用GuNanOvO预编译包(裁剪+UPX,约6.5MB,免Go编译;https://github.com/GuNanOvO/openwrt-tailscale)
+# 以虚拟包tailscale-prebuilt承载,PROVIDES:=tailscale满足luci-app-tailscale依赖
+TS_TAG="$(git ls-remote --tags --refs -q https://github.com/GuNanOvO/openwrt-tailscale "v*" 2>/dev/null |sed 's|.*refs/tags/v||' |grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' |sort -V |tail -1)"
+TS_PKG="package/tailscale-prebuilt"
+if [ -n "$TS_TAG" ] && curl -sL "https://github.com/GuNanOvO/openwrt-tailscale/releases/download/v${TS_TAG}/tailscale_${TS_TAG}_aarch64_cortex-a53.ipk" -o /tmp/ts.ipk && [ -s /tmp/ts.ipk ]; then
+	rm -rf "$TS_PKG" /tmp/tsx && mkdir -p "$TS_PKG" /tmp/tsx
+	tar -xzf /tmp/ts.ipk -C /tmp && tar -xzf /tmp/data.tar.gz -C /tmp/tsx --exclude=./usr/sbin/tailscale
+	mv /tmp/tsx/usr/sbin/tailscaled "$TS_PKG"/ && chmod 755 "$TS_PKG"/tailscaled
+	mv /tmp/tsx/etc/init.d/tailscale "$TS_PKG"/tailscale.init && chmod 755 "$TS_PKG"/tailscale.init
+	mv /tmp/tsx/etc/config/tailscale "$TS_PKG"/tailscale.conf
+	mv /tmp/tsx/lib/upgrade/keep.d/tailscale "$TS_PKG"/tailscale.keep 2>/dev/null
+	cat > "$TS_PKG/Makefile" <<'MKEOF'
+include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/package.mk
+
+define Package/tailscale-prebuilt
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=VPN
+  TITLE:=Tailscale prebuilt (GuNanOvO optimized build)
+  DEPENDS:=+ca-bundle +kmod-tun
+  PROVIDES:=tailscale
+  PKGARCH:=aarch64_cortex-a53
+endef
+
+define Package/tailscale-prebuilt/description
+  Prebuilt Tailscale from GuNanOvO/openwrt-tailscale releases (stripped+UPX, ~6.5MB)
+endef
+
+define Build/Compile
+endef
+
+define Package/tailscale-prebuilt/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) ./tailscaled $(1)/usr/sbin/tailscaled
+	$(LN) tailscaled $(1)/usr/sbin/tailscale
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./tailscale.init $(1)/etc/init.d/tailscale
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./tailscale.conf $(1)/etc/config/tailscale
+	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
+	$(INSTALL_DATA) ./tailscale.keep $(1)/lib/upgrade/keep.d/tailscale
+endef
+
+$(eval $(call BuildPackage,tailscale-prebuilt))
+MKEOF
+	echo "已烘焙tailscale-prebuilt v$TS_TAG(GuNanOvO预编译,~6.5MB)"
+	rm -rf /tmp/tsx
 else
-	echo "警告:未找到feeds里的tailscale包或未取到最新版本号,跳过tailscale升级"
+	echo "警告:tailscale预编译包下载失败或未取到版本号,本轮将无tailscale"
 fi
+rm -f /tmp/ts.ipk /tmp/data.tar.gz
 
 # 首开机强制修改后台IP/掩码/主机名(上游common对mt798x源码的sed机制失效,这里用uci-defaults兜底)
 # 复用上方Ipv4_ipaddr/Netmask_netm/Op_name的值,填0则维持源码默认
