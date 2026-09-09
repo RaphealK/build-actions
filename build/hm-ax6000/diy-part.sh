@@ -103,11 +103,7 @@ git clone  https://github.com/linkease/istore.git package/luci-app-store
 git clone https://github.com/eamonxg/luci-theme-aurora.git package/luci-theme-aurora
 # luci-app-aurora-config(Aurora 主题的设置页,eamonxg 源;htdocs 预编译)
 git clone https://github.com/eamonxg/luci-app-aurora-config.git package/luci-app-aurora-config
-# luci-app-tailscale(asvow 源;tailscale 本体在 packages feed 无需克隆)
-# sing-box管理页为自写的luci-app-singbox,在diy/package/luci-app-singbox,随源码树带入
-git clone https://github.com/asvow/luci-app-tailscale.git package/luci-app-tailscale
-
-# Go工具链自动切换+本地GOPROXY(对所有Go包生效;新版sing-box/tailscale要求更高Go,feed自举链编不了新Go)
+# Go工具链自动切换+本地GOPROXY(对所有Go包生效;新版sing-box要求更高Go,feed自举链编不了新Go)
 GP_MK="feeds/packages/lang/golang/golang-package.mk"
 if [ -f "$GP_MK" ] && grep -q "GOTOOLCHAIN=local" "$GP_MK"; then
 	sed -i "s/GOTOOLCHAIN=local/GOTOOLCHAIN=auto/" "$GP_MK"
@@ -119,10 +115,11 @@ if [ "${LOCAL_BUILD:-0}" = "1" ] && grep -q "GOENV=off" "$GP_MK" && ! grep -q "G
 	sed -i "s|\tGOENV=off \\\\|\tGOENV=off \\\\\n\tGOPROXY=https://goproxy.cn,direct \\\\|" "$GP_MK"
 	echo "已注入GOPROXY=goproxy.cn(本地构建)"
 fi
-# UPX安装(供sing-box/tailscale压缩共用)
+# UPX安装(供sing-box编译后压缩;tailscale用GuNanOvO预编译包已自带UPX)
 command -v upx >/dev/null 2>&1 || sudo apt-get install -y -qq upx-ucl >/dev/null 2>&1
 
 # sing-box升级到最新正式版(覆盖feed里的旧版;版本号/源码哈希每次编译自动获取)
+# sing-box管理页为自写的luci-app-singbox,在diy/package/luci-app-singbox,随源码树带入
 SB_MK="feeds/packages/net/sing-box/Makefile"
 SB_VER="$(git ls-remote --tags --refs -q https://github.com/SagerNet/sing-box "v*" 2>/dev/null |sed 's|.*refs/tags/v||' |grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' |sort -V |tail -1)"
 if [ -f "$SB_MK" ] && [ -n "$SB_VER" ]; then
@@ -156,7 +153,7 @@ else
 fi
 
 # tailscale改用GuNanOvO预编译包(裁剪+UPX,约6.5MB,免Go编译;https://github.com/GuNanOvO/openwrt-tailscale)
-# 以虚拟包tailscale-prebuilt承载,PROVIDES:=tailscale满足luci-app-tailscale依赖
+# 以虚拟包tailscale-prebuilt承载,PROVIDES:=tailscale(asvow的luci-app-tailscale已移除,其helper的255.0.0.0掩码与CGNAT宽带冲突)
 TS_TAG="$(git ls-remote --tags --refs -q https://github.com/GuNanOvO/openwrt-tailscale "v*" 2>/dev/null |sed 's|.*refs/tags/v||' |grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' |sort -V |tail -1)"
 TS_PKG="package/tailscale-prebuilt"
 if [ -n "$TS_TAG" ] && curl -sL "https://github.com/GuNanOvO/openwrt-tailscale/releases/download/v${TS_TAG}/tailscale_${TS_TAG}_aarch64_cortex-a53.ipk" -o /tmp/ts.ipk && [ -s /tmp/ts.ipk ]; then
