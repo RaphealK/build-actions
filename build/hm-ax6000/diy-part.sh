@@ -115,7 +115,7 @@ if [ "${LOCAL_BUILD:-0}" = "1" ] && grep -q "GOENV=off" "$GP_MK" && ! grep -q "G
 	sed -i "s|\tGOENV=off \\\\|\tGOENV=off \\\\\n\tGOPROXY=https://goproxy.cn,direct \\\\|" "$GP_MK"
 	echo "已注入GOPROXY=goproxy.cn(本地构建)"
 fi
-# UPX安装(供sing-box编译后压缩;tailscale用GuNanOvO预编译包已自带UPX)
+# UPX安装(供sing-box编译后压缩)
 command -v upx >/dev/null 2>&1 || sudo apt-get install -y -qq upx-ucl >/dev/null 2>&1
 
 # sing-box升级到最新正式版(覆盖feed里的旧版;版本号/源码哈希每次编译自动获取)
@@ -151,65 +151,6 @@ if [ -f "$SB_MK" ] && [ -n "$SB_VER" ]; then
 else
 	echo "警告:未找到feeds里的sing-box包或未取到最新版本号,跳过sing-box升级"
 fi
-
-# tailscale改用GuNanOvO预编译包(裁剪+UPX,约6.5MB,免Go编译;https://github.com/GuNanOvO/openwrt-tailscale)
-# 以虚拟包tailscale-prebuilt承载,PROVIDES:=tailscale(asvow的luci-app-tailscale已移除,其helper的255.0.0.0掩码与CGNAT宽带冲突)
-TS_TAG="$(git ls-remote --tags --refs -q https://github.com/GuNanOvO/openwrt-tailscale "v*" 2>/dev/null |sed 's|.*refs/tags/v||' |grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' |sort -V |tail -1)"
-TS_PKG="package/tailscale-prebuilt"
-if [ -n "$TS_TAG" ] && curl -sL "https://github.com/GuNanOvO/openwrt-tailscale/releases/download/v${TS_TAG}/tailscale_${TS_TAG}_aarch64_cortex-a53.ipk" -o /tmp/ts.ipk && [ -s /tmp/ts.ipk ]; then
-	rm -rf "$TS_PKG" /tmp/tsx && mkdir -p "$TS_PKG" /tmp/tsx
-	tar -xzf /tmp/ts.ipk -C /tmp && tar -xzf /tmp/data.tar.gz -C /tmp/tsx --exclude=./usr/sbin/tailscale
-	mv /tmp/tsx/usr/sbin/tailscaled "$TS_PKG"/ && chmod 755 "$TS_PKG"/tailscaled
-	mv /tmp/tsx/etc/init.d/tailscale "$TS_PKG"/tailscale.init && chmod 755 "$TS_PKG"/tailscale.init
-	mv /tmp/tsx/etc/config/tailscale "$TS_PKG"/tailscale.conf
-	mv /tmp/tsx/lib/upgrade/keep.d/tailscale "$TS_PKG"/tailscale.keep 2>/dev/null
-	cat > "$TS_PKG/Makefile" <<'MKEOF'
-include $(TOPDIR)/rules.mk
-include $(INCLUDE_DIR)/package.mk
-
-PKG_NAME:=tailscale-prebuilt
-PKG_VERSION:=__TS_TAG__
-PKG_LICENSE:=BSD-3-Clause
-
-define Package/tailscale-prebuilt
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=VPN
-  TITLE:=Tailscale prebuilt (GuNanOvO optimized build)
-  DEPENDS:=+ca-bundle +kmod-tun
-  PROVIDES:=tailscale
-  VERSION:=__TS_TAG__
-  PKGARCH:=aarch64_cortex-a53
-endef
-
-define Package/tailscale-prebuilt/description
-  Prebuilt Tailscale from GuNanOvO/openwrt-tailscale releases (stripped+UPX, ~6.5MB)
-endef
-
-define Build/Compile
-endef
-
-define Package/tailscale-prebuilt/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) ./tailscaled $(1)/usr/sbin/tailscaled
-	$(LN) tailscaled $(1)/usr/sbin/tailscale
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./tailscale.init $(1)/etc/init.d/tailscale
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./tailscale.conf $(1)/etc/config/tailscale
-	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
-	$(INSTALL_DATA) ./tailscale.keep $(1)/lib/upgrade/keep.d/tailscale
-endef
-
-$(eval $(call BuildPackage,tailscale-prebuilt))
-MKEOF
-	sed -i "s/__TS_TAG__/$TS_TAG/g" "$TS_PKG/Makefile"
-	echo "已烘焙tailscale-prebuilt v$TS_TAG(GuNanOvO预编译,~6.5MB)"
-	rm -rf /tmp/tsx
-else
-	echo "警告:tailscale预编译包下载失败或未取到版本号,本轮将无tailscale"
-fi
-rm -f /tmp/ts.ipk /tmp/data.tar.gz
 
 # 首开机强制修改后台IP/掩码/主机名(上游common对mt798x源码的sed机制失效,这里用uci-defaults兜底)
 # 复用上方Ipv4_ipaddr/Netmask_netm/Op_name的值,填0则维持源码默认

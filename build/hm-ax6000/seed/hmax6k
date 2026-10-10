@@ -241,7 +241,6 @@ CONFIG_PACKAGE_resolveip=y
 CONFIG_PACKAGE_rpcd-mod-rpcsys=y
 CONFIG_PACKAGE_sing-box=y
 CONFIG_PACKAGE_switch=y
-CONFIG_PACKAGE_tailscale-prebuilt=y
 CONFIG_PACKAGE_tc-tiny=y
 CONFIG_PACKAGE_wifi-dats=y
 CONFIG_PACKAGE_wifi-scripts=y
